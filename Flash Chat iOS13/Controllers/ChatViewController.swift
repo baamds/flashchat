@@ -5,16 +5,17 @@
 //  Created by Angela Yu on 21/10/2019.
 //  Copyright © 2019 Angela Yu. All rights reserved.
 //
- 
+
 import UIKit
 import Firebase
 
 class ChatViewController: UIViewController {
-
+    
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var messageTextfield: UITextField!
     
     let db = Firestore.firestore()
+    
     var messages: [Message] = [
         Message(sender: "1@2.com", body: "Hey"),
         Message(sender: "a@b.com", body: "Hello!"),
@@ -30,7 +31,30 @@ class ChatViewController: UIViewController {
         navigationItem.hidesBackButton = true
         // registering the Nib file with this tableView
         tableView.register(UINib(nibName: K.cellNibName, bundle: nil), forCellReuseIdentifier: K.cellIdentifier)
+        loadMessages()
+        
     }
+    // add a snapshot listener to database
+    func loadMessages() {
+          db.collection(K.FStore.collectionName)
+            .order(by: K.FStore.dateField)
+            .addSnapshotListener { querySnapshot, error in
+            self.messages = []
+            if let snapshotDocuments = querySnapshot?.documents {
+                for doc in snapshotDocuments {
+                    let data = doc.data()
+                    if let messageSender = data[K.FStore.senderField] as? String, let messageBody = data[K.FStore.bodyField] as? String {
+                        let message = Message(sender: messageSender, body: messageBody)
+                        self.messages.append(message)
+                        DispatchQueue.main.async {
+                            self.tableView.reloadData()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     
     @IBAction func sendPressed(_ sender: UIButton) {
         //get hold of the message itself and the user email
@@ -44,31 +68,31 @@ class ChatViewController: UIViewController {
                     print("Successfully saved Data")
                 }
             }
-            
         }
     }
     
     @IBAction func logoutPressed(_ sender: UIBarButtonItem) {
+        createAlertView()
+    }
+    
+    func createAlertView() {
+        let alert = UIAlertController(title: "Log Out", message: "You will be returned to the login screen", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: {action in
+        }))
+        alert.addAction(UIAlertAction(title: "Log Out", style: .default, handler: { [weak self] action in
+            self?.confirmLogout ()
+        }))
+        self.present(alert, animated: true)
+    }
+    
+    func confirmLogout() {
         
-        confirmLogout ()
-        
-        func confirmLogout () {
-            let alert = UIAlertController(title: "Log Out", message: "You will be returned to the login screen", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: {action in
-            }))
-            alert.addAction(UIAlertAction(title: "Log Out", style: .default, handler: {action in
-                // if user chose to log out, go to the first page
-                // print the error if there is any
-            do {
-                try Auth.auth().signOut()
-                // pop to root, goes directly to the login screen
-                self.navigationController?.popToRootViewController(animated: true)
-                
-            } catch let signOutError as NSError {
-              print("Error signing out: %@", signOutError)
-            }
-            }))
-            self.present(alert, animated: true)
+        do {
+            try Auth.auth().signOut()
+            self.navigationController?.popToRootViewController(animated: true)
+            
+        } catch let signOutError as NSError {
+            print("Error signing out: %@", signOutError)
         }
     }
 }
@@ -80,14 +104,13 @@ extension ChatViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        // this meethod gets called for as many rows as there are in the table view so message.row times
-        // using as keyword: cast this reusable cell as a MessageCell class 
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.cellIdentifier, for: indexPath) as! MessageCell
-        cell.label.text = messages[indexPath.row].body
- 
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: K.cellIdentifier, for: indexPath) as? MessageCell else {
+            return UITableViewCell()
+        }
+        let message = messages[indexPath.row]
+        cell.label.text = message.body
+        cell.configure(for: message, email: message.sender)
         return cell
     }
-    
-    
 }
 

@@ -8,6 +8,7 @@
 
 import UIKit
 import Firebase
+
 class LoginViewController: UIViewController {
 
     @IBOutlet weak var emailTextfield: UITextField!
@@ -18,30 +19,24 @@ class LoginViewController: UIViewController {
         
         if let email = emailTextfield.text, let password = passwordTextfield.text {
             
-            Auth.auth().signIn(withEmail: email, password: password) {authResult, error in
-               
+            Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
                 if let e = error {
                     let errorMsg = e.localizedDescription
-                    showAlert()
-                    
-                    // show the alert to user, message comes from firebase
-                    // the error is related either to password or email
-                    func showAlert() {
-                        let alert = UIAlertController(title: "Login Failed!", message: "\(errorMsg)", preferredStyle: .alert)
-                        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: {action in
-                        }))
-                        self.present(alert, animated: true)
-                    }
-                } else {
-                    self.performSegue(withIdentifier: K.loginSegue, sender: self)
+                    self?.showAlert(with: errorMsg)
+                }
+                else {
+                    self?.performSegue(withIdentifier: K.loginSegue, sender: self)
                     print(email, password)
                 }
-
             }
         }
     }
     
-    
-
+    func showAlert(with errorDescription: String) {
+        let alert = UIAlertController(title: "Login Failed!", message: "\(errorDescription)", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: {action in
+        }))
+        present(alert, animated: true)
+    }
     
 }

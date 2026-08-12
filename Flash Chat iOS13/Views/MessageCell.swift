@@ -7,12 +7,14 @@
 //
 
 import UIKit
+import Firebase
 
 class MessageCell: UITableViewCell {
 
     @IBOutlet weak var messageBubble: UIView!
     @IBOutlet weak var label: UILabel!
     @IBOutlet weak var rightImgView: UIImageView!
+    @IBOutlet weak var leftImageView: UIImageView!
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -26,6 +28,22 @@ class MessageCell: UITableViewCell {
         // Configure the view for the selected state
         // Configure the view for the selected state
         // Configure the view for the selected state
+    }
+ 
+    func configure(for message: Message, email: String) {
+        if email == Auth.auth().currentUser?.email {
+            if message.sender == Auth.auth().currentUser?.email {
+                leftImageView.isHidden = true
+                rightImgView.isHidden = false
+                backgroundColor = UIColor(named: K.BrandColors.lightPurple)
+                label.textColor = UIColor(named: K.BrandColors.purple)
+            } else {
+                leftImageView.isHidden = false
+                rightImgView.isHidden = true
+                backgroundColor = UIColor(named: K.BrandColors.purple)
+                label.backgroundColor = UIColor(named: K.BrandColors.lightPurple)
+            }
+        }
     }
     
 }

@@ -32,7 +32,7 @@ class RegisterViewController: UIViewController {
                         self.present(alert, animated: true)
                     }
                 } else {
-                    // if no error, login succeeded, navigate to ChatViewController
+                    // if no error, register succeeded, navigate to ChatViewController
                     self.performSegue(withIdentifier: K.registerSegue, sender: self)
             }
         }
